@@ -27,16 +27,17 @@ export default{
             axios.defaults.baseURL = 'https://gao-lara-vue.herokuapp.com'
             console.log(axios);
             if(this.email != "" && this.password!= ""){
-                axios.post('/api/auth/', {email: this.email, password: this.password})
-                .then(({data}) => {
-                    console.log(data);
-                    if(data.success === false){
-                        this.$store.commit('Alert', {alert: true, color: 'red', message: data.message})
-                    }else{
-                        this.$store.commit('SetUser', data)
-                        window.location.href = '/'
-                    }
-                })
+                // axios.post('/api/auth/', {email: this.email, password: this.password})
+                // .then(({data}) => {
+                //     console.log(data);
+                //     if(data.success === false){
+                //         this.$store.commit('Alert', {alert: true, color: 'red', message: data.message})
+                //     }else{
+                //         this.$store.commit('SetUser', data)
+                //         window.location.href = '/'
+                //     }
+                // })
+                window.location.href = '/'
             }else{
 
             }
