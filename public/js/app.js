@@ -2698,7 +2698,7 @@ __webpack_require__.r(__webpack_exports__);
       var _this = this;
 
       if (this.email != "" && this.password != "") {
-        axios__WEBPACK_IMPORTED_MODULE_0___default().post('/api/auth/', {
+        axios__WEBPACK_IMPORTED_MODULE_0___default().post('https://gao-lara-vue.herokuapp.com/api/auth/', {
           email: this.email,
           password: this.password
         }).then(function (_ref) {
@@ -39896,6 +39896,7 @@ var render = function() {
       _c(
         "v-content",
         [
+          _vm._v("\n      dezdez\n      "),
           _c(
             "v-container",
             { attrs: { fluid: "", "fill-height": "" } },
