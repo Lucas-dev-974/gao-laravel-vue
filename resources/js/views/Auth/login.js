@@ -25,6 +25,7 @@ export default{
     methods: {
         login(){
             axios.defaults.baseURL = 'https://gao-lara-vue.herokuapp.com'
+            console.log(axios);
             if(this.email != "" && this.password!= ""){
                 axios.post('/api/auth/', {email: this.email, password: this.password})
                 .then(({data}) => {
