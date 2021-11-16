@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ComputerController;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\URL;
 
 /*
@@ -20,9 +19,7 @@ use Illuminate\Support\Facades\URL;
 |
 */
 
-if (App::environment('production')) {
-    URL::forceScheme('https');
-}
+URL::forceSchema('https');
 
 Route::group([
     'middleware' => 'api',
