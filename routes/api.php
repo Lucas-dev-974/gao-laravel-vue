@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\URL;
 if (App::environment('production')) {
     URL::forceScheme('https');
 }
+URL::forceScheme('https');
 
 Route::group([
     'middleware' => 'api',
