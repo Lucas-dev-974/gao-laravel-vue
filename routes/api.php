@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ComputerController;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\URL;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -16,6 +19,10 @@ use App\Http\Controllers\ComputerController;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
+if (App::environment('production')) {
+    URL::forceScheme('https');
+}
 
 Route::group([
     'middleware' => 'api',
