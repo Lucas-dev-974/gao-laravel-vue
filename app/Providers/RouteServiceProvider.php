@@ -48,15 +48,6 @@ class RouteServiceProvider extends ServiceProvider
                 ->namespace($this->namespace)
                 ->group(base_path('routes/web.php'));
         });
-
-        $url = Request::url();
-        $check = strstr($url,"http://");
-        if($check)
-        {
-           $newUrl = str_replace("http","https",$url);
-           header("Location:".$newUrl);
-    
-        }
     }
 
     /**
