@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { reduce } from 'lodash';
 
 export default{
 
@@ -25,6 +24,7 @@ export default{
 
     methods: {
         login(){
+            axios.defaults.baseURL = 'https://gao-lara-vue.herokuapp.com'
             if(this.email != "" && this.password!= ""){
                 axios.post('/api/auth/', {email: this.email, password: this.password})
                 .then(({data}) => {
