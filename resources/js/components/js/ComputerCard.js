@@ -18,6 +18,7 @@ export default{
         return {
             attributions: [],
             horraires:    [],
+            clickNumber:  0 
         }
     },
 
@@ -32,7 +33,7 @@ export default{
                     let horraire = parseInt(attribution.horraire)
                     this.attributions[horraire] = {
                         id:     attribution.id,
-                        client: attribution.client.name
+                        client: attribution.users.name
                     }
                 }
             })
@@ -50,28 +51,48 @@ export default{
         },
 
         DeleteAttribution(horraireData){
-            axios.delete('/api/attributions/delete/' + horraireData.attribution.id)
+            axios.delete('/api/attributions/' + horraireData.attribution.id)
             .then(({data}) => {
-                if(data.success){
-                    this.$store.commit('UpdateComputer', {
-                        id:          this.computer.id,
-                        attribution: data.attribution
-                    })
-                    let attributions  = this.attributions.filter(attr => attr.id !== horraireData.attribution.id)
-                    this.attributions = []
-                    this.attributions = attributions
-
-                    this.Init()
-                }
+                console.log('delete attr: ', data);
+                this.$store.commit('UpdateComputer', {
+                    id:   this.computer.id,
+                    data: data,
+                    type: 'delete-attribution'
+                })
+                console.log('this.attributions:', this.attributions);
+                let attributions = this.attributions.filter(attribution => {
+                    if(attribution.id != data.id) return attribution
+                })
+                this.attributions = attributions
+                console.log(attributions);
+                this.Init()
+            }).catch(error => {
+                this.$store.commit('Alert', {alert: true, message: error.message, color: 'error'})
             })
         },
 
+        RemoveComputer(computer){
+            switch(this.clickNumber){
+                case 0:
+                    this.$store.commit('Alert', {alert: true, color: 'orange', message: 'Clicker une 2eme fois pour supprimer l\'ordinateur'})
+                    ++this.clickNumber
+                case 1:
+                    axios.delete('/api/computers/' + computer.id)     // Suppression request
+                    .then(({data}) => {
+                        this.$store.commit('RemoveComputer', computer.id) // Suppression local
+                    }).catch(error => {
+                        this.$store.commit('Alert', {alert: true, message: error.message, color: 'error'})
+                    })
+                    this.clickNumber = 0
+            }
+        },
+
         updateHorraire(dataHorraire){
-            let horraire = this.horraires.map(horraire =>{
+            this.horraires.map(horraire =>{
                 if(horraire.index == dataHorraire.index){
                     horraire.attribution = {
                         id: dataHorraire.attribution.id,
-                        client: dataHorraire.attribution.client.name
+                        client: dataHorraire.attribution.users.name
                     }
                 }
             })

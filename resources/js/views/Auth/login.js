@@ -26,7 +26,7 @@ export default{
     methods: {
         login(){
             if(this.email != "" && this.password!= ""){
-                axios.post('/api/auth/login', {email: this.email, password: this.password})
+                axios.post('/api/auth/', {email: this.email, password: this.password})
                 .then(({data}) => {
                     console.log(data);
                     if(data.success === false){

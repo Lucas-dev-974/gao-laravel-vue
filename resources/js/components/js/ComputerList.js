@@ -22,7 +22,6 @@ export default{
                 this.$store.commit('Alert', {alert: true, color: 'orange', message: 'Clicker une 2eme fois pour supprimer l\'ordinateur'})
             }else{
                 if(this.clickNumber.id !== computer.id){// Si click sur supp un autre ordi alors on reset
-                    console.log('different computer click');
                     this.clickNumber = {}                // reset
                 }else{                                  // Si double click sur supp le meme ordi alors on supprime
                     axios.delete('/api/computers/delete/' + computer.id)     // Suppression request
@@ -40,18 +39,20 @@ export default{
         },
 
         UpdateName(computer){
-            console.log(computer);
             if(computer instanceof KeyboardEvent){
                 let data = {
                     id:    this.updateComputer.id,
                     name:  this.updateComputer.name,
+                    // type: 'update-name'
                 }
-                console.log(data);
                 axios.post('/api/computers/update', data)
                 .then(({data}) => {
                     if(data.success){
-                        console.log('ok updated');
-                        this.$store.commit('UpdateComputer', computer)
+                        this.$store.commit('UpdateComputer', {
+                            type: 'update-name',
+                            id:   computer.id,
+                            data: this.updateComputer.name
+                        })
                         this.update = false
                         this.$store.commit('Alert', {alert: true, color: 'success', message: 'L\ordinateur a bien été mis à jour'})
                     }

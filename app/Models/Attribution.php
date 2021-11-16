@@ -16,4 +16,8 @@ class Attribution extends Model
     public function client(){
         return $this->hasOne(User::class, 'id', 'user_id');
     }
+
+    public function computer(){
+        return $this->belongsTo(Computer::class, 'id', 'computer_id');
+    }
 }

@@ -2,45 +2,41 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserCollection;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class ClientController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('jwt.verify');
+    }
 
-    public function GetClients(Request $request){
-        $this->Authenticated($request);
+    public function get(){
         $clients = User::whereNull('password')->get();
-        return response()->json(['clients' => $clients]);
+        return $this->_jsonRsp(['clients' => UserCollection::collection($clients)], 200);
     }
     
-    public function Create(Request $request){
-        $this->Authenticated($request);
+    public function create(Request $request){
         $validator = Validator::make($request->all(), ['name' => 'string|required']);
-        if($validator->fails()) return response()->json(['success' => false, 'message' => 'Veuillez renseigner tout les champs !']);
-
+        if($validator->fails()) return $this->_jsonRsp(['message' => 'Veuillez renseigné tous les champs !'], 403);
         $client = User::create(['name' => $request->name]);
-        return response()->json(['success' => true, 'client' => $client]);
+        return $this->_jsonRsp(['client' => new UserCollection($client)], 200);
     }
     
-    public function Delete(Request $request, $id){
-        $this->Authenticated($request);
-        $validator = Validator::make($request->all(), ['id' => 'numeric|required']);
-        if(!isset($id) || empty($id)) return response()->json(['success' => false, 'message' => 'Veuillez complété tous les champs']);   
-
+    public function delete($id){
+        if(empty($id) || !is_numeric($id)) return $this->_jsonRsp(['message' => 'Veuillez complété tous les champs'], 403);   
         $user = User::find($id);
-        if(!$user)  return response()->json(['success' => false, 'message' => 'L\'ordinateur n\'existe pas ! ']);
-        $user->delete();
-        return response()->json([$user]);
+        if(!$user)  return $this->_jsonRsp(['message' => 'L\'ordinateur n\'existe pas ! '], 403);
+        if(!$user->delete()) return $this->_jsonRsp(['message' => 'Une erreur c\'est produite !'], 403);
+        return $this->_jsonRsp(['id' => $id], 200);
     }
 
-    public function search(Request $request){
-        $this->Authenticated($request);
-        $validator = Validator::make($request->all(), ['query_search' => 'required|string']);
-        if($validator->fails()) return response()->json(['success' => false]);
-
-        $clients = User::where('name', 'like', '%' . $request->query_search . '%')->get();
-        return response()->json(['success' => true, 'clients' => $clients]);
+    public function search(Request $request, $Squery){
+        if(empty($Squery) || !is_string($Squery)) return $this->_jsonRsp(['message' => ""], 403);
+        $clients = User::where('name', 'like', '%' . $Squery . '%')->get();
+        return $this->_jsonRsp(['clients' => $clients], 200);
     }
 }

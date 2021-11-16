@@ -20,23 +20,20 @@ use App\Http\Controllers\ComputerController;
 Route::group([
     'middleware' => 'api',
     'prefix' => 'auth'
-], function ($router) {
-    Route::post('/login',       [AuthController::class, 'login']);
-    Route::post('/register',    [AuthController::class, 'register']);
-    Route::post('/logout',      [AuthController::class, 'logout']);
-    Route::post('/refresh',     [AuthController::class, 'refresh']);
-    Route::get('/user-profile', [AuthController::class, 'userProfile']);    
-    Route::get('/test-token',   [AuthController::class, 'TestToken']);    
+], function () {
+    Route::post('/',         [AuthController::class, 'login']);
+    Route::put('/register',  [AuthController::class, 'register']);  
+    Route::get('/',          [AuthController::class, 'TestToken']);    
 });
 
 Route::group([
     'midleware' => 'api',
     'prefix'    => 'computers'
-], function($router){
-    Route::post('get',    [ComputerController::class, 'GetComputers']);
-    Route::post('create', [ComputerController::class, 'CreateComputer']);
-    Route::post('update', [ComputerController::class, 'Update']);
-    Route::delete('delete/{id}', [ComputerController::class, 'Delete']);
+], function(){
+    Route::get('/{date}',        [ComputerController::class, 'get']);
+    Route::post('/',             [ComputerController::class, 'create']);
+    Route::patch('/{id}/{name}', [ComputerController::class, 'update']);
+    Route::delete('/{id}',       [ComputerController::class, 'delete']);
 });
 
 
@@ -44,16 +41,16 @@ Route::group([
     'midleware' => 'api',
     'prefix'    => 'attributions'
 ], function($router){
-    Route::post('create',      [AttributionController::class, 'AddAttribution']);
-    Route::delete('delete/{id}', [AttributionController::class, 'RemoveAttribution']);
+    Route::post('/',       [AttributionController::class, 'add']);
+    Route::delete('/{id}', [AttributionController::class, 'remove']);
 });
 
 Route::group([
     'midleware' => 'api',
     'prefix'    => 'client'
 ], function($router){
-    Route::get('/getAll',        [ClientController::class, 'GetClients']);
-    Route::post('create',        [ClientController::class, 'Create']);
-    Route::delete('delete/{id}', [ClientController::class, 'Delete']);
-    Route::post('/search',       [ClientController::class, 'search']);
+    Route::get('/',         [ClientController::class, 'get']);
+    Route::post('/',        [ClientController::class, 'create']);
+    Route::delete('/{id}',  [ClientController::class, 'delete']);
+    Route::patch('/{Squery}', [ClientController::class, 'search']);
 });

@@ -2,7 +2,12 @@
     <v-card outlined elevation="14" min-width="350">
         <div style="height: 33px !important" class="mb-10">
             <v-app-bar dark dense>
-                {{computer.name}}
+                <v-col cols="10">
+                    {{computer.name}}
+                </v-col>
+                <v-col>
+                    <v-btn color="success" icon><v-icon color="red" @click="RemoveComputer(computer)">mdi-close</v-icon></v-btn>
+                </v-col>
             </v-app-bar>
         </div>
         <v-list v-for="horraire in horraires" :key="horraire.index">

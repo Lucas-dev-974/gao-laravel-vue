@@ -18,3 +18,4 @@ Route::prefix('/')->group(function () {
         return view('app');
     })->where('any', '.*');
 }); 
+

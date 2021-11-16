@@ -1,6 +1,6 @@
 import axios from "axios";
-import ComputersList from '../../components/ComputerList.vue'
 import ComputerCard  from '../../components/ComputerCard.vue'
+import AddComputer   from '../../components/AddComputer.vue'
 
 export default {
     data(){
@@ -12,15 +12,15 @@ export default {
     },
 
     components:{
-        ComputersList, ComputerCard
+        ComputerCard, AddComputer
     },
 
     mounted(){
         this.checkLogin()
-        axios.post('/api/computers/get', {date: this.date}).then(({data}) => {
-            if(data.success){
-                this.$store.commit('SetComputer', data.computers)
-            }
+        axios.get('/api/computers/' + this.date).then(({data}) => {
+            this.$store.commit('SetComputer', data.computers)
+        }).catch(error => {
+            this.$store.commit({alert: true, message: error.message, color: 'error'})
         })
     },
 
@@ -29,7 +29,7 @@ export default {
             if(this.$store.state.UserInfos){
                 if(this.$store.state.UserInfos.access_token){ // Define token authorization
                     axios.defaults.headers.common = {'Authorization': `bearer ${this.$store.state.UserInfos.access_token}`}
-                    axios.get('/api/auth/test-token').then(({data}) => {
+                    axios.get('/api/auth/').then(({data}) => {
                         if(data.success !== true)  window.location.href = '/login'
                     })
                 } 
@@ -40,7 +40,7 @@ export default {
 
 
         initialize: function (){
-            axios.post('/api/computers/get', {date: this.date})
+            axios.post('/api/computers/', {date: this.date})
             .then(({ data }) => {
                 if(data.success){
                     this.$store.commit('SetComputer', data.computers)

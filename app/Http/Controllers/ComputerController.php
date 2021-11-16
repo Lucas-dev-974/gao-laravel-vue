@@ -1,65 +1,54 @@
 <?php
-
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ComputerCollection;
 use App\Models\Computer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
-use function PHPUnit\Framework\returnSelf;
-
 class ComputerController extends Controller
 {   
-    public function GetComputers(Request $request){
-        $this->Authenticated($request);
-        $validator = Validator::make($request->input(), ['date' => 'required']);
-        if($validator->fails()) return response()->json(['success' => false, 'message' => 'date manquante']);
 
-        $computers = Computer::with(['attributions' => function($req) use ($request){
-            $req->where('date', '=', $request->date)->with('client');
+    public function __construct()
+    {
+        $this->middleware('jwt.verify');
+    }
+    public function get($date){
+        if(empty($date)) return response()->json(['message' => 'Un champ de type Datetime est demandé'], 403);
+        $computers = Computer::with(['attributions' => function($req) use ($date){
+            $req->where('date', '=', $date)->get();
         }])->get();
-        
-        return response()->json(['success' => true, 'computers' => $computers]);
+        $this->_jsonRsp(['computers' => ComputerCollection::collection($computers)], 200);
     }
 
-    public function CreateComputer(Request $request){
-        $this->Authenticated($request);
+    public function create(Request $request){
         $validator = Validator::make($request->all(), ['name' => 'string|required']);
-        if($validator->fails()) return response()->json(['success' => false, 'message' => 'Veuillez complété tous les champs']);
+        if($validator->fails()) $this->_jsonRsp(['message' => 'Veuillez complété tous les champs'], 403);
 
-        $computer = Computer::create(['name' => $request->name]);
+        $computer = Computer::create(['name' => $validator->validated()['name']]);
         $computer->attributions;
         foreach($computer->attributions as $attribution) $attribution->client;
-        
-        return response()->json(['success' => true, 'computer' => $computer]);
+        $this->_jsonRsp(['computer' => new ComputerCollection($computer)], 200);
     }
 
-    public function Update(Request $request){
-        $this->Authenticated($request);
-
-        $validator = Validator::make($request->all(), ['name' => 'string', 'id' => 'numeric|required']);
-        if($validator->fails()) return response()->json(['success' => false, 'message' => 'Veuillez complété tous les champs']);
+    public function update($id, $name){
+        if(!is_numeric($id) || !is_string($name)) return $this->_jsonRsp(['message' => 'Veuillez remplir pour le champ id une entré de type nombres et pour le champ nom une des lettres/nombres !'], 403);
         
-        $computer = Computer::find($request->id);
-        if(!$computer)  return response()->json(['success' => false, 'message' => 'L\'ordinateur n\'existe pas ! ']);
+        $computer = Computer::find($id);
+        if(!$computer)  return $this->_jsonRsp(['success' => false, 'message' => 'L\'ordinateur n\'existe pas ! '], 403);
 
-        if(isset($request->name)){
-            $computer->name = $request->name;
+        if(isset($name)){
+            $computer->name = $name;
         }
-        
-        $computer->save();
-        return response()->json([
-            'success' => true,
-            'computer' => $computer
-        ]);
+        $state = $computer->save();
+        if(!$state) return $this->_jsonRsp(['message' => 'Une erreur c\'est produite'], 403);
+        return $this->_jsonRsp(['computer' => $computer], 200);
     }
 
-    public function Delete(Request $request, $id){
-        $this->Authenticated($request);  
-        if(!isset($id) || empty($id)) return response()->json(['success' => false, 'message' => 'Une erreur est survenue, l\'id de l\'ordinateur est manquant']);
+    public function delete(Request $request, $id){
+        if(empty($id)) return $this->_jsonRsp(['message' => 'Veuillez remplir le champ demandé !'], 403);
         $computer = Computer::find($request->id);
-        if(!$computer)  return response()->json(['success' => false, 'message' => 'L\'ordinateur n\'existe pas ! ']);
-        // $computer->delete();
-        return response()->json(['success' => $computer->delete()]);
+        if(!$computer)  return $this->_jsonRsp(['message' => 'L\'ordinateur n\'existe pas ! '], 406);
+        return $this->json(['success' => $computer->delete()], 200);
     }
 }

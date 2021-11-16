@@ -2166,23 +2166,26 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var bootstrap__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! bootstrap */ "./node_modules/bootstrap/dist/js/bootstrap.js");
 /* harmony import */ var bootstrap__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(bootstrap__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm.js");
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
-/* harmony import */ var vuex_persist__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vuex-persist */ "./node_modules/vuex-persist/dist/esm/index.js");
+/* harmony import */ var jquery__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! jquery */ "./node_modules/jquery/dist/jquery.js");
+/* harmony import */ var jquery__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(jquery__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vuex_persist__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vuex-persist */ "./node_modules/vuex-persist/dist/esm/index.js");
 
 
 
 
-vue__WEBPACK_IMPORTED_MODULE_1__["default"].use(vuex__WEBPACK_IMPORTED_MODULE_2__["default"]);
-var VuexLocalStorage = new vuex_persist__WEBPACK_IMPORTED_MODULE_3__["default"]({
+
+vue__WEBPACK_IMPORTED_MODULE_2__["default"].use(vuex__WEBPACK_IMPORTED_MODULE_3__["default"]);
+var VuexLocalStorage = new vuex_persist__WEBPACK_IMPORTED_MODULE_4__["default"]({
   key: 'vuex',
   storage: window.localStorage
 });
-var store = new vuex__WEBPACK_IMPORTED_MODULE_2__["default"].Store({
+var store = new vuex__WEBPACK_IMPORTED_MODULE_3__["default"].Store({
   plugins: [VuexLocalStorage.plugin],
   state: {
     AlertMessage: "",
-    OnAlert: "",
+    OnAlert: false,
     AlertColor: "",
     count: 0,
     UserInfos: null,
@@ -2207,7 +2210,6 @@ var store = new vuex__WEBPACK_IMPORTED_MODULE_2__["default"].Store({
       state.UserInfos = user;
     },
     SetComputer: function SetComputer(state, computers) {
-      console.log('in store computer update computers list');
       state.Computers = [];
       state.Computers = computers;
     },
@@ -2221,22 +2223,26 @@ var store = new vuex__WEBPACK_IMPORTED_MODULE_2__["default"].Store({
       });
       state.Computers = computers;
     },
-    UpdateComputer: function UpdateComputer(state, computerData) {
+    UpdateComputer: function UpdateComputer(state, computer_data) {
       state.Computers.forEach(function (computer) {
-        if (computerData.id === computer.id) {
-          if (computerData.name) // Si on veux mettre à jour le nom de l'ordinauteur
-            computer.name = computerData.name;else if (computerData.attribution) // Si on veux m'etre à jour les attributions
-            computer.attributions.forEach(function (attr) {
-              if (attr.id == computerData.attribution.id) {
-                var attributions = computer.attributions.filter(function (attr) {
-                  return attr.id != computerData.attribution.id;
-                });
-                computer.attributions = [];
-                computer.attributions = attributions;
-              } else {
-                computer.attributions.push(computerData.attribution);
-              }
-            });
+        if (computer_data.id == computer.id) {
+          switch (computer_data.type) {
+            case 'update-name':
+              computer.name = computer_data.data;
+              break;
+
+            case 'add-attribution':
+              computer.attributions.push(computer_data.data);
+              break;
+
+            case 'delete-attribution':
+              console.log('delete attribution local');
+              var attributions = computer.attributions.filter(function (attribution) {
+                return attribution.id != computer_data.data.id;
+              });
+              computer.attributions = attributions;
+              break;
+          }
         }
       });
     }
@@ -2375,17 +2381,18 @@ __webpack_require__.r(__webpack_exports__);
       var _this = this;
 
       if (val && val.length > 1) {
-        axios__WEBPACK_IMPORTED_MODULE_0___default().post('/api/client/search', {
-          query_search: val
-        }).then(function (_ref) {
+        axios__WEBPACK_IMPORTED_MODULE_0___default().patch('/api/client/' + val).then(function (_ref) {
           var data = _ref.data;
-
-          if (data.success) {
-            _this.loading = true;
-            data.clients.forEach(function (client) {
-              _this.clients.push(_this.formattedClient(client));
-            });
-          }
+          _this.loading = true;
+          data.clients.forEach(function (client) {
+            _this.clients.push(_this.formattedClient(client));
+          });
+        })["catch"](function (error) {
+          _this.$store.commit('Alert', {
+            alert: true,
+            message: error.message,
+            color: 'error'
+          });
         });
       }
     }
@@ -2401,22 +2408,23 @@ __webpack_require__.r(__webpack_exports__);
       var _this2 = this;
 
       if (lodash__WEBPACK_IMPORTED_MODULE_1___default().isNumber(this.client.id)) {
-        axios__WEBPACK_IMPORTED_MODULE_0___default().post('/api/attributions/create', this.Client()).then(function (_ref2) {
+        axios__WEBPACK_IMPORTED_MODULE_0___default().post('/api/attributions/', this.Client()).then(function (_ref2) {
           var data = _ref2.data;
+          var _data = {
+            id: _this2.computer.id,
+            data: data.attribution,
+            type: 'add-attribution'
+          };
 
-          if (data.success) {
-            var _data = {
-              id: _this2.computer.id,
-              attribution: data.attribution
-            };
+          _this2.$store.commit('UpdateComputer', _data);
 
-            _this2.$store.commit('UpdateComputer', _data);
+          _this2.$emit('updateHorraire', {
+            index: _this2.hourre,
+            attribution: data.attribution
+          });
 
-            _this2.$emit('updateHorraire', {
-              index: _this2.hourre,
-              attribution: data.attribution
-            });
-          }
+          _this2.dialog = false;
+        })["catch"](function (error) {// this.$store.commit('Alert', {alert: true, message: error.message, color: 'error'})
         });
       } else this.$store.commit('Alert', {
         alert: true,
@@ -2436,17 +2444,24 @@ __webpack_require__.r(__webpack_exports__);
       var _this3 = this;
 
       if (this.clientName.length > 0) {
-        axios__WEBPACK_IMPORTED_MODULE_0___default().post('/api/client/create', {
+        axios__WEBPACK_IMPORTED_MODULE_0___default().post('/api/client/', {
           name: this.clientName
         }).then(function (_ref3) {
           var data = _ref3.data;
-          console.log(data);
+          _this3.dialog = false;
 
-          if (data.success) {
-            _this3.client = data.client;
-            _this3.search = data.client.name;
-            _this3.addClient = false;
-          }
+          _this3.$emit('updateHorraire', {
+            index: _this3.hourre,
+            attribution: data.attribution
+          });
+
+          _this3.dialog = false;
+        })["catch"](function (error) {
+          _this3.$store.commit('Alert', {
+            alert: true,
+            message: error.message,
+            color: 'error'
+          });
         });
       }
     }
@@ -2483,18 +2498,19 @@ __webpack_require__.r(__webpack_exports__);
       (axios__WEBPACK_IMPORTED_MODULE_0___default().defaults.headers.common) = {
         'Authorization': "bearer ".concat(this.$store.state.UserInfos.access_token)
       };
-      axios__WEBPACK_IMPORTED_MODULE_0___default().post('/api/computers/create', {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post('/api/computers/', {
         name: this.computer_name
       }).then(function (_ref) {
         var data = _ref.data;
 
-        if (data.success) {
-          console.log('Ajout de l\'ordi: ', data.computer);
-
-          _this.$store.commit('AddComputer', data.computer);
-        }
+        _this.$store.commit('AddComputer', data.computer);
+      })["catch"](function (error) {
+        _this.$store.commit('Alert', {
+          alert: true,
+          message: error.message,
+          color: 'error'
+        });
       });
-      console.log('Ajout ordi');
     }
   }
 });
@@ -2535,7 +2551,8 @@ __webpack_require__.r(__webpack_exports__);
   data: function data() {
     return {
       attributions: [],
-      horraires: []
+      horraires: [],
+      clickNumber: 0
     };
   },
   mounted: function mounted() {
@@ -2550,7 +2567,7 @@ __webpack_require__.r(__webpack_exports__);
           var horraire = parseInt(attribution.horraire);
           _this.attributions[horraire] = {
             id: attribution.id,
-            client: attribution.client.name
+            client: attribution.users.name
           };
         }
       });
@@ -2569,143 +2586,72 @@ __webpack_require__.r(__webpack_exports__);
     DeleteAttribution: function DeleteAttribution(horraireData) {
       var _this2 = this;
 
-      axios__WEBPACK_IMPORTED_MODULE_0___default()["delete"]('/api/attributions/delete/' + horraireData.attribution.id).then(function (_ref) {
+      axios__WEBPACK_IMPORTED_MODULE_0___default()["delete"]('/api/attributions/' + horraireData.attribution.id).then(function (_ref) {
         var data = _ref.data;
+        console.log('delete attr: ', data);
 
-        if (data.success) {
-          _this2.$store.commit('UpdateComputer', {
-            id: _this2.computer.id,
-            attribution: data.attribution
-          });
+        _this2.$store.commit('UpdateComputer', {
+          id: _this2.computer.id,
+          data: data,
+          type: 'delete-attribution'
+        });
 
-          var attributions = _this2.attributions.filter(function (attr) {
-            return attr.id !== horraireData.attribution.id;
-          });
+        console.log('this.attributions:', _this2.attributions);
 
-          _this2.attributions = [];
-          _this2.attributions = attributions;
+        var attributions = _this2.attributions.filter(function (attribution) {
+          if (attribution.id != data.id) return attribution;
+        });
 
-          _this2.Init();
-        }
+        _this2.attributions = attributions;
+        console.log(attributions);
+
+        _this2.Init();
+      })["catch"](function (error) {
+        _this2.$store.commit('Alert', {
+          alert: true,
+          message: error.message,
+          color: 'error'
+        });
       });
     },
+    RemoveComputer: function RemoveComputer(computer) {
+      var _this3 = this;
+
+      switch (this.clickNumber) {
+        case 0:
+          this.$store.commit('Alert', {
+            alert: true,
+            color: 'orange',
+            message: 'Clicker une 2eme fois pour supprimer l\'ordinateur'
+          });
+          ++this.clickNumber;
+
+        case 1:
+          axios__WEBPACK_IMPORTED_MODULE_0___default()["delete"]('/api/computers/' + computer.id) // Suppression request
+          .then(function (_ref2) {
+            var data = _ref2.data;
+
+            _this3.$store.commit('RemoveComputer', computer.id); // Suppression local
+
+          })["catch"](function (error) {
+            _this3.$store.commit('Alert', {
+              alert: true,
+              message: error.message,
+              color: 'error'
+            });
+          });
+          this.clickNumber = 0;
+      }
+    },
     updateHorraire: function updateHorraire(dataHorraire) {
-      var horraire = this.horraires.map(function (horraire) {
+      this.horraires.map(function (horraire) {
         if (horraire.index == dataHorraire.index) {
           horraire.attribution = {
             id: dataHorraire.attribution.id,
-            client: dataHorraire.attribution.client.name
+            client: dataHorraire.attribution.users.name
           };
         }
       });
-    }
-  }
-});
-
-/***/ }),
-
-/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5[0].rules[0].use[0]!./resources/js/components/js/ComputerList.js?vue&type=script&lang=js&":
-/*!**********************************************************************************************************************************************************!*\
-  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5[0].rules[0].use[0]!./resources/js/components/js/ComputerList.js?vue&type=script&lang=js& ***!
-  \**********************************************************************************************************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _AddComputer_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../AddComputer.vue */ "./resources/js/components/AddComputer.vue");
-
-
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  data: function data() {
-    return {
-      clickNumber: {},
-      update: false,
-      updateComputer: null
-    };
-  },
-  components: {
-    AddComputer: _AddComputer_vue__WEBPACK_IMPORTED_MODULE_1__["default"]
-  },
-  methods: {
-    RemoveComputer: function RemoveComputer(computer) {
-      var _this = this;
-
-      if (Object.keys(this.clickNumber).length == 0) {
-        this.clickNumber = {
-          id: computer.id,
-          click: 1
-        };
-        this.$store.commit('Alert', {
-          alert: true,
-          color: 'orange',
-          message: 'Clicker une 2eme fois pour supprimer l\'ordinateur'
-        });
-      } else {
-        if (this.clickNumber.id !== computer.id) {
-          // Si click sur supp un autre ordi alors on reset
-          console.log('different computer click');
-          this.clickNumber = {}; // reset
-        } else {
-          // Si double click sur supp le meme ordi alors on supprime
-          axios__WEBPACK_IMPORTED_MODULE_0___default()["delete"]('/api/computers/delete/' + computer.id) // Suppression request
-          .then(function (_ref) {
-            var data = _ref.data;
-
-            if (data.success) {
-              _this.$store.commit('RemoveComputer', computer.id); // Suppression local
-
-            } else {
-              _this.$store.commit('Alert', {
-                alert: true,
-                color: 'orange',
-                message: 'Une erreur est survenue'
-              });
-            }
-          });
-          this.clickNumber = {};
-          this.$store.commit('Alert', {
-            alert: false
-          });
-        }
-      }
-    },
-    UpdateName: function UpdateName(computer) {
-      var _this2 = this;
-
-      console.log(computer);
-
-      if (computer instanceof KeyboardEvent) {
-        var data = {
-          id: this.updateComputer.id,
-          name: this.updateComputer.name
-        };
-        console.log(data);
-        axios__WEBPACK_IMPORTED_MODULE_0___default().post('/api/computers/update', data).then(function (_ref2) {
-          var data = _ref2.data;
-
-          if (data.success) {
-            console.log('ok updated');
-
-            _this2.$store.commit('UpdateComputer', computer);
-
-            _this2.update = false;
-
-            _this2.$store.commit('Alert', {
-              alert: true,
-              color: 'success',
-              message: 'L\ordinateur a bien été mis à jour'
-            });
-          }
-        });
-      } else {
-        this.updateComputer = computer;
-        this.update = true;
-      }
     }
   }
 });
@@ -2752,7 +2698,7 @@ __webpack_require__.r(__webpack_exports__);
       var _this = this;
 
       if (this.email != "" && this.password != "") {
-        axios__WEBPACK_IMPORTED_MODULE_0___default().post('/api/auth/login', {
+        axios__WEBPACK_IMPORTED_MODULE_0___default().post('/api/auth/', {
           email: this.email,
           password: this.password
         }).then(function (_ref) {
@@ -2791,8 +2737,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _components_ComputerList_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../components/ComputerList.vue */ "./resources/js/components/ComputerList.vue");
-/* harmony import */ var _components_ComputerCard_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../components/ComputerCard.vue */ "./resources/js/components/ComputerCard.vue");
+/* harmony import */ var _components_ComputerCard_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../components/ComputerCard.vue */ "./resources/js/components/ComputerCard.vue");
+/* harmony import */ var _components_AddComputer_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../components/AddComputer.vue */ "./resources/js/components/AddComputer.vue");
 
 
 
@@ -2805,21 +2751,23 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   components: {
-    ComputersList: _components_ComputerList_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
-    ComputerCard: _components_ComputerCard_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
+    ComputerCard: _components_ComputerCard_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
+    AddComputer: _components_AddComputer_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
   },
   mounted: function mounted() {
     var _this = this;
 
     this.checkLogin();
-    axios__WEBPACK_IMPORTED_MODULE_0___default().post('/api/computers/get', {
-      date: this.date
-    }).then(function (_ref) {
+    axios__WEBPACK_IMPORTED_MODULE_0___default().get('/api/computers/' + this.date).then(function (_ref) {
       var data = _ref.data;
 
-      if (data.success) {
-        _this.$store.commit('SetComputer', data.computers);
-      }
+      _this.$store.commit('SetComputer', data.computers);
+    })["catch"](function (error) {
+      _this.$store.commit({
+        alert: true,
+        message: error.message,
+        color: 'error'
+      });
     });
   },
   methods: {
@@ -2830,7 +2778,7 @@ __webpack_require__.r(__webpack_exports__);
           (axios__WEBPACK_IMPORTED_MODULE_0___default().defaults.headers.common) = {
             'Authorization': "bearer ".concat(this.$store.state.UserInfos.access_token)
           };
-          axios__WEBPACK_IMPORTED_MODULE_0___default().get('/api/auth/test-token').then(function (_ref2) {
+          axios__WEBPACK_IMPORTED_MODULE_0___default().get('/api/auth/').then(function (_ref2) {
             var data = _ref2.data;
             if (data.success !== true) window.location.href = '/login';
           });
@@ -2840,7 +2788,7 @@ __webpack_require__.r(__webpack_exports__);
     initialize: function initialize() {
       var _this2 = this;
 
-      axios__WEBPACK_IMPORTED_MODULE_0___default().post('/api/computers/get', {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post('/api/computers/', {
         date: this.date
       }).then(function (_ref3) {
         var data = _ref3.data;
@@ -39005,45 +38953,6 @@ component.options.__file = "resources/js/components/ComputerCard.vue"
 
 /***/ }),
 
-/***/ "./resources/js/components/ComputerList.vue":
-/*!**************************************************!*\
-  !*** ./resources/js/components/ComputerList.vue ***!
-  \**************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var _ComputerList_vue_vue_type_template_id_4f258478___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ComputerList.vue?vue&type=template&id=4f258478& */ "./resources/js/components/ComputerList.vue?vue&type=template&id=4f258478&");
-/* harmony import */ var _js_ComputerList_js_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./js/ComputerList.js?vue&type=script&lang=js& */ "./resources/js/components/js/ComputerList.js?vue&type=script&lang=js&");
-/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
-
-
-
-
-
-/* normalize component */
-;
-var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
-  _js_ComputerList_js_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["default"],
-  _ComputerList_vue_vue_type_template_id_4f258478___WEBPACK_IMPORTED_MODULE_0__.render,
-  _ComputerList_vue_vue_type_template_id_4f258478___WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
-  false,
-  null,
-  null,
-  null
-  
-)
-
-/* hot reload */
-if (false) { var api; }
-component.options.__file = "resources/js/components/ComputerList.vue"
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
-
-/***/ }),
-
 /***/ "./resources/js/components/Layout.vue":
 /*!********************************************!*\
   !*** ./resources/js/components/Layout.vue ***!
@@ -39225,22 +39134,6 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./resources/js/components/js/ComputerList.js?vue&type=script&lang=js&":
-/*!*****************************************************************************!*\
-  !*** ./resources/js/components/js/ComputerList.js?vue&type=script&lang=js& ***!
-  \*****************************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_0_rules_0_use_0_ComputerList_js_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5[0].rules[0].use[0]!./ComputerList.js?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5[0].rules[0].use[0]!./resources/js/components/js/ComputerList.js?vue&type=script&lang=js&");
- /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_0_rules_0_use_0_ComputerList_js_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
-
-/***/ }),
-
 /***/ "./resources/js/views/Auth/login.js?vue&type=script&lang=js&":
 /*!*******************************************************************!*\
   !*** ./resources/js/views/Auth/login.js?vue&type=script&lang=js& ***!
@@ -39366,23 +39259,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_ComputerCard_vue_vue_type_template_id_f08b0194___WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
 /* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_ComputerCard_vue_vue_type_template_id_f08b0194___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./ComputerCard.vue?vue&type=template&id=f08b0194& */ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/components/ComputerCard.vue?vue&type=template&id=f08b0194&");
-
-
-/***/ }),
-
-/***/ "./resources/js/components/ComputerList.vue?vue&type=template&id=4f258478&":
-/*!*********************************************************************************!*\
-  !*** ./resources/js/components/ComputerList.vue?vue&type=template&id=4f258478& ***!
-  \*********************************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "render": () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_ComputerList_vue_vue_type_template_id_4f258478___WEBPACK_IMPORTED_MODULE_0__.render),
-/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_ComputerList_vue_vue_type_template_id_4f258478___WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
-/* harmony export */ });
-/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_ComputerList_vue_vue_type_template_id_4f258478___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./ComputerList.vue?vue&type=template&id=4f258478& */ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/components/ComputerList.vue?vue&type=template&id=4f258478&");
 
 
 /***/ }),
@@ -39711,6 +39587,8 @@ var render = function() {
           fn: function(ref) {
             var on = ref.on
             return [
+              _c("v-icon", [_vm._v("mdi-laptop")]),
+              _vm._v(" "),
               _c(
                 "v-btn",
                 _vm._g(
@@ -39762,9 +39640,19 @@ var render = function() {
             [
               _c("v-text-field", {
                 attrs: {
-                  name: "name",
-                  label: "label",
+                  label: "Nom du pc",
                   placeholder: "Nom de l'ordinateur"
+                },
+                on: {
+                  keyup: function($event) {
+                    if (
+                      !$event.type.indexOf("key") &&
+                      _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")
+                    ) {
+                      return null
+                    }
+                    return _vm.AddComputer.apply(null, arguments)
+                  }
                 },
                 model: {
                   value: _vm.computer_name,
@@ -39824,9 +39712,46 @@ var render = function() {
         "div",
         { staticClass: "mb-10", staticStyle: { height: "33px !important" } },
         [
-          _c("v-app-bar", { attrs: { dark: "", dense: "" } }, [
-            _vm._v("\n            " + _vm._s(_vm.computer.name) + "\n        ")
-          ])
+          _c(
+            "v-app-bar",
+            { attrs: { dark: "", dense: "" } },
+            [
+              _c("v-col", { attrs: { cols: "10" } }, [
+                _vm._v(
+                  "\n                " +
+                    _vm._s(_vm.computer.name) +
+                    "\n            "
+                )
+              ]),
+              _vm._v(" "),
+              _c(
+                "v-col",
+                [
+                  _c(
+                    "v-btn",
+                    { attrs: { color: "success", icon: "" } },
+                    [
+                      _c(
+                        "v-icon",
+                        {
+                          attrs: { color: "red" },
+                          on: {
+                            click: function($event) {
+                              return _vm.RemoveComputer(_vm.computer)
+                            }
+                          }
+                        },
+                        [_vm._v("mdi-close")]
+                      )
+                    ],
+                    1
+                  )
+                ],
+                1
+              )
+            ],
+            1
+          )
         ],
         1
       ),
@@ -39898,164 +39823,6 @@ var render = function() {
       })
     ],
     2
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-
-
-/***/ }),
-
-/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/components/ComputerList.vue?vue&type=template&id=4f258478&":
-/*!************************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/components/ComputerList.vue?vue&type=template&id=4f258478& ***!
-  \************************************************************************************************************************************************************************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "render": () => (/* binding */ render),
-/* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
-/* harmony export */ });
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "v-navigation-drawer",
-    {
-      staticClass: "pt-10",
-      attrs: {
-        width: "400",
-        permanent: "",
-        "expand-on-hover": "",
-        app: "",
-        color: "#09151E"
-      }
-    },
-    [
-      _c("v-divider"),
-      _vm._v(" "),
-      _c("v-icon", { staticClass: "ml-3", attrs: { color: "white" } }, [
-        _vm._v("mdi-laptop")
-      ]),
-      _vm._v(" "),
-      _c("AddComputer"),
-      _vm._v(" "),
-      _c("v-divider"),
-      _vm._v(" "),
-      _vm.update
-        ? _c(
-            "v-list",
-            { attrs: { dense: "", nav: "" } },
-            [
-              _c(
-                "v-list-item",
-                [
-                  _c("v-icon"),
-                  _vm._v(" "),
-                  _c("v-text-field", {
-                    attrs: {
-                      label: "Nouveau nom pour " + _vm.updateComputer.name,
-                      color: "white",
-                      dark: ""
-                    },
-                    on: {
-                      keyup: function($event) {
-                        if (
-                          !$event.type.indexOf("key") &&
-                          _vm._k(
-                            $event.keyCode,
-                            "enter",
-                            13,
-                            $event.key,
-                            "Enter"
-                          )
-                        ) {
-                          return null
-                        }
-                        return _vm.UpdateName.apply(null, arguments)
-                      }
-                    },
-                    model: {
-                      value: _vm.updateComputer.name,
-                      callback: function($$v) {
-                        _vm.$set(_vm.updateComputer, "name", $$v)
-                      },
-                      expression: "updateComputer.name"
-                    }
-                  })
-                ],
-                1
-              )
-            ],
-            1
-          )
-        : _vm._e(),
-      _vm._v(" "),
-      _c(
-        "v-list",
-        { attrs: { nav: "", dense: "" } },
-        _vm._l(_vm.$store.state.Computers, function(computer) {
-          return _c(
-            "v-list-item",
-            { key: computer.id },
-            [
-              _c("v-icon", [_vm._v("mdi-plu")]),
-              _vm._v(" "),
-              _c("v-list-item-title", { staticClass: "white--text" }, [
-                _vm._v(_vm._s(computer.name))
-              ]),
-              _vm._v(" "),
-              _c(
-                "v-btn",
-                { attrs: { color: "success", icon: "" } },
-                [
-                  _c(
-                    "v-icon",
-                    {
-                      attrs: { color: "orange" },
-                      on: {
-                        click: function($event) {
-                          return _vm.UpdateName(computer)
-                        }
-                      }
-                    },
-                    [_vm._v("mdi-pencil")]
-                  )
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
-                "v-btn",
-                { attrs: { color: "success", icon: "" } },
-                [
-                  _c(
-                    "v-icon",
-                    {
-                      attrs: { color: "red" },
-                      on: {
-                        click: function($event) {
-                          return _vm.RemoveComputer(computer)
-                        }
-                      }
-                    },
-                    [_vm._v("mdi-close")]
-                  )
-                ],
-                1
-              )
-            ],
-            1
-          )
-        }),
-        1
-      )
-    ],
-    1
   )
 }
 var staticRenderFns = []
@@ -40284,15 +40051,13 @@ var render = function() {
         1
       ),
       _vm._v(" "),
-      _c("ComputersList"),
-      _vm._v(" "),
       _c(
         "v-row",
         { staticStyle: { position: "relative", top: "5%" } },
         [
           _c(
             "v-col",
-            { attrs: { cols: "1", md: "3", sm: "8" } },
+            { staticClass: "px-12", attrs: { cols: "1", md: "3", sm: "8" } },
             [
               _c(
                 "v-menu",
@@ -40369,6 +40134,13 @@ var render = function() {
                 1
               )
             ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-col",
+            { staticClass: "mt-5", attrs: { cols: "1" } },
+            [_c("AddComputer")],
             1
           )
         ],

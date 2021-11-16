@@ -6,16 +6,20 @@
             </v-app-bar>
         </div>
 
-        <ComputersList />
+        <!-- <ComputersList /> -->
 
         <v-row  style="position: relative; top: 5%">
-            <v-col cols="1" md="3" sm="8">
+            <v-col cols="1" md="3" sm="8" class="px-12">
                 <v-menu offset-y v-model="dateMenu" :close-on-content-click="false" :nudge-right="40" transition="scale-transition" >
                     <template v-slot:activator="{ on, attrs }">
                         <v-text-field v-model="date" label="Saisir une date" prepend-icon="mdi-calendar" readonly v-bind="attrs" v-on="on"></v-text-field>
                     </template>
                     <v-date-picker v-model="date" @change="initialize" @input="menuDate = false" locale="fr-fr"></v-date-picker>
                 </v-menu>                
+            </v-col>
+            
+            <v-col cols="1" class="mt-5">
+                <AddComputer />
             </v-col>
 
         </v-row>

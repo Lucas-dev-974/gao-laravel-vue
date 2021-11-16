@@ -25,14 +25,14 @@ export default{
     watch: {
         search: function(val){
             if(val && val.length > 1){
-                axios.post('/api/client/search', {query_search: val})
+                axios.patch('/api/client/' + val)
                 .then(({data}) => {
-                    if(data.success){
-                        this.loading = true
-                        data.clients.forEach(client => {
-                            this.clients.push(this.formattedClient(client))
-                        });
-                    }
+                    this.loading = true
+                    data.clients.forEach(client => {
+                        this.clients.push(this.formattedClient(client))
+                    });
+                }).catch(error => {
+                    this.$store.commit('Alert', {alert: true, message: error.message, color: 'error'})
                 })
             }
         }
@@ -48,17 +48,18 @@ export default{
 
         Attribuer(){
             if( _.isNumber(this.client.id)){
-                axios.post('/api/attributions/create', this.Client())
+                axios.post('/api/attributions/', this.Client())
                 .then(({data}) => {
-                    if(data.success){
-                        let _data = {
-                            id:          this.computer.id,
-                            attribution: data.attribution
-                        }
-
-                        this.$store.commit('UpdateComputer', _data)
-                        this.$emit('updateHorraire', {index: this.hourre, attribution: data.attribution})
+                    let _data = {
+                        id:   this.computer.id,
+                        data: data.attribution,
+                        type: 'add-attribution'
                     }
+                    this.$store.commit('UpdateComputer', _data)
+                    this.$emit('updateHorraire', {index: this.hourre, attribution: data.attribution})
+                    this.dialog = false
+                }).catch(error => {
+                    // this.$store.commit('Alert', {alert: true, message: error.message, color: 'error'})
                 })
             }else this.$store.commit('Alert', {alert: true, color: 'red', message: 'Veuillez sélectionner un client'})
         },
@@ -74,14 +75,13 @@ export default{
 
         AddClient(){
             if(this.clientName.length > 0){
-                axios.post('/api/client/create', {name: this.clientName})
+                axios.post('/api/client/', {name: this.clientName})
                 .then(({data}) => {
-                    console.log(data);
-                    if(data.success){
-                        this.client = data.client
-                        this.search = data.client.name
-                        this.addClient = false
-                    }
+                    this.dialog = false
+                    this.$emit('updateHorraire', {index: this.hourre, attribution: data.attribution})
+                    this.dialog = false
+                }).catch(error => {
+                    this.$store.commit('Alert', {alert: true, message: error.message, color: 'error'})
                 })
             }
         }

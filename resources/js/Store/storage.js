@@ -1,4 +1,5 @@
 import { Alert } from 'bootstrap'
+import { data } from 'jquery'
 import Vue  from 'vue'
 import Vuex from 'vuex'
 import VuexPersist from 'vuex-persist'
@@ -14,7 +15,7 @@ const store = new Vuex.Store({
     plugins: [ VuexLocalStorage.plugin ],
     state:{
         AlertMessage: "",
-        OnAlert: "",
+        OnAlert: false,
         AlertColor: "",
         count: 0,
 
@@ -45,7 +46,6 @@ const store = new Vuex.Store({
         },
 
         SetComputer(state, computers){
-            console.log('in store computer update computers list');
             state.Computers = []
             state.Computers = computers
         },
@@ -61,21 +61,24 @@ const store = new Vuex.Store({
             state.Computers = computers
         },
 
-        UpdateComputer(state, computerData){
+        UpdateComputer(state, computer_data){
             state.Computers.forEach(computer => {
-                if(computerData.id === computer.id){
-                    if(computerData.name)              // Si on veux mettre à jour le nom de l'ordinauteur
-                        computer.name = computerData.name
-                    else if(computerData.attribution) // Si on veux m'etre à jour les attributions
-                        computer.attributions.forEach(attr => {
-                            if(attr.id == computerData.attribution.id){
-                                let attributions = computer.attributions.filter(attr => attr.id != computerData.attribution.id)
-                                computer.attributions = []
-                                computer.attributions = attributions
-                            }else{
-                                computer.attributions.push(computerData.attribution)
-                            }
-                        });
+                if(computer_data.id == computer.id){
+                    switch(computer_data.type){
+                        case 'update-name':
+                            computer.name = computer_data.data
+                            break
+
+                        case 'add-attribution':
+                            computer.attributions.push(computer_data.data)
+                            break
+
+                        case 'delete-attribution':
+                            console.log('delete attribution local');
+                            let attributions = computer.attributions.filter(attribution => attribution.id != computer_data.data.id)
+                            computer.attributions = attributions
+                            break
+                    }
                 }
             });
         },
