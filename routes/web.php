@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\URL;
 |
 */
 
-URL::forceSchema('https');
+// URL::forceSchema('https');
 
 Route::prefix('/')->group(function () {
     Route::get('/{any}',function () {
