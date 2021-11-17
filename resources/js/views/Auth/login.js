@@ -30,6 +30,7 @@ export default{
                 axios.post(loginurl, {email: this.email, password: this.password})
                 .then(({data}) => {
                     console.log(data);
+                    console.log(data);
                     if(data.success === false){
                         this.$store.commit('Alert', {alert: true, color: 'red', message: data.message})
                     }else{
