@@ -27,7 +27,7 @@ export default{
             if(this.email != "" && this.password!= ""){
                 let loginurl = document.getElementById('authLoginUrl').getAttribute('data-url')
                 console.log(loginurl);
-                axios.post(loginurl, {email: this.email, password: this.password})
+                axios.post(loginurl + '/', {email: this.email, password: this.password})
                 .then(({data}) => {
                     console.log(data);
                     console.log(data);
