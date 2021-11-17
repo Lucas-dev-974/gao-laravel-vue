@@ -25,7 +25,7 @@ Route::group([
     'middleware' => 'api',
     'prefix' => 'auth'
 ], function () {
-    Route::post('/',         [AuthController::class, 'login']);
+    Route::post('/',         [AuthController::class, 'login'])->name('authLogin');
     Route::put('/register',  [AuthController::class, 'register']);  
     Route::get('/',          [AuthController::class, 'TestToken']);    
 });

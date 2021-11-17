@@ -13,6 +13,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
     </head>
     <body class="antialiased">
+        <span id='authLoginUrl' data-url='{{ route("authLogin") }}'></span>
         <div id="app">
             <layout></layout>
         </div>
